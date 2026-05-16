@@ -897,22 +897,6 @@
             `;
             modal.classList.remove('hidden');
 
-            const nameInput = document.getElementById('new-stu-name');
-            const userInput = document.getElementById('new-stu-user');
-            const passInput = document.getElementById('new-stu-pass');
-
-            // Auto generate username based on name
-            nameInput.addEventListener('input', (e) => {
-                const base = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 8);
-                if(base) {
-                    userInput.value = base + Math.floor(Math.random() * 1000);
-                    if(!passInput.value) passInput.value = Math.random().toString(36).slice(-6);
-                } else {
-                    userInput.value = '';
-                    passInput.value = '';
-                }
-            });
-
             document.getElementById('close-modal').addEventListener('click', () => modal.classList.add('hidden'));
             
             document.getElementById('add-student-form').addEventListener('submit', async (e) => {
@@ -921,18 +905,34 @@
                 btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
                 btn.disabled = true;
 
-                await saveStudent({
-                    name: nameInput.value,
-                    grade: document.getElementById('new-stu-grade').value,
-                    classroom: document.getElementById('new-stu-class').value || 'General',
-                    username: userInput.value,
-                    password: passInput.value,
-                    stars: 0 // Initialize for gamification
-                });
+                try {
+                    const nameVal = document.getElementById('new-stu-name').value;
+                    const gradeVal = document.getElementById('new-stu-grade').value;
+                    const classVal = document.getElementById('new-stu-class').value || 'General';
+                    
+                    // Auto-generate username and password in the background
+                    const baseUser = nameVal.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 8);
+                    const generatedUsername = baseUser + Math.floor(Math.random() * 1000);
+                    const generatedPassword = Math.random().toString(36).slice(-6);
 
-                modal.classList.add('hidden');
-                showToast('Student added successfully!');
-                renderView('teacherDashboard'); // re-render
+                    await saveStudent({
+                        name: nameVal,
+                        grade: gradeVal,
+                        classroom: classVal,
+                        username: generatedUsername,
+                        password: generatedPassword,
+                        stars: 0 // Initialize for gamification
+                    });
+
+                    modal.classList.add('hidden');
+                    showToast('Student added successfully!');
+                    renderView('teacherDashboard'); // re-render
+                } catch (err) {
+                    console.error("Error adding student:", err);
+                    showToast('Failed to save student', 'error');
+                    btn.innerHTML = 'Save Student';
+                    btn.disabled = false;
+                }
             });
         }
 
